@@ -19,10 +19,27 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Setup local uploads storage with Multer
-const UPLOAD_DIR = path.join(__dirname, 'uploads');
+const UPLOAD_DIR = process.env.VERCEL
+  ? path.join('/tmp', 'uploads')
+  : path.join(__dirname, 'uploads');
+
 if (!fs.existsSync(UPLOAD_DIR)) {
   fs.mkdirSync(UPLOAD_DIR, { recursive: true });
 }
+
+// Serverless DB lazy initialization middleware
+let dbInitialized = false;
+app.use(async (req, res, next) => {
+  if (!dbInitialized) {
+    try {
+      await Database.initDatabase();
+      dbInitialized = true;
+    } catch (err) {
+      console.error('[DB Init Error]', err);
+    }
+  }
+  next();
+});
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -202,20 +219,24 @@ app.get('/api/admin/metrics', async (req, res) => {
   }
 });
 
-// Initialize database and boot server
-Database.initDatabase().then(() => {
-  app.listen(PORT, () => {
-    console.log('================================================================');
-    console.log(`  ATELIER NOIR - Apparel Platform (Decoupled Node + Express + SQLite3)`);
-    console.log('================================================================');
-    console.log(`  > Storefront:  http://localhost:${PORT}`);
-    console.log(`  > Catalog:     http://localhost:${PORT}/shop.html`);
-    console.log(`  > Profile:     http://localhost:${PORT}/profile.html`);
-    console.log(`  > Admin Hub:   http://localhost:${PORT}/admin.html`);
-    console.log(`  > API Root:    http://localhost:${PORT}/api/products`);
-    console.log(`  > Health:      http://localhost:${PORT}/api/health`);
-    console.log('================================================================');
+// Initialize database and boot server when running as standalone process
+if (process.env.NODE_ENV !== 'test' && !process.env.VERCEL) {
+  Database.initDatabase().then(() => {
+    app.listen(PORT, () => {
+      console.log('================================================================');
+      console.log(`  ATELIER NOIR - Apparel Platform (Decoupled Node + Express + SQLite3)`);
+      console.log('================================================================');
+      console.log(`  > Storefront:  http://localhost:${PORT}`);
+      console.log(`  > Catalog:     http://localhost:${PORT}/shop.html`);
+      console.log(`  > Profile:     http://localhost:${PORT}/profile.html`);
+      console.log(`  > Admin Hub:   http://localhost:${PORT}/admin.html`);
+      console.log(`  > API Root:    http://localhost:${PORT}/api/products`);
+      console.log(`  > Health:      http://localhost:${PORT}/api/health`);
+      console.log('================================================================');
+    });
+  }).catch(err => {
+    console.error('[Database Error] Failed to initialize SQLite3 database:', err);
   });
-}).catch(err => {
-  console.error('[Database Error] Failed to initialize SQLite3 database:', err);
-});
+}
+
+module.exports = app;

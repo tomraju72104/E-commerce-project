@@ -7,7 +7,9 @@ const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 const fs = require('fs');
 
-const DB_PATH = path.join(__dirname, 'atelier.db');
+const DB_PATH = process.env.VERCEL 
+  ? path.join('/tmp', 'atelier.db') 
+  : path.join(__dirname, 'atelier.db');
 const db = new sqlite3.Database(DB_PATH);
 
 // Helper to run queries as Promises
