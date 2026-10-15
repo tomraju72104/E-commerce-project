@@ -1,61 +1,55 @@
 /**
  * ATELIER NOIR - Decoupled Client State & API Service Layer
- * Abstracts data access and persistence (currently LocalStorage + Mock DB,
- * cleanly prepared for 1:1 migration to Express REST endpoints).
+ * Fully wired to Express.js REST API with SQLite3 backend persistence and local storage synchronization.
  */
 
 const STORAGE_KEYS = {
   CART: 'atelier_cart_v1',
   WISHLIST: 'atelier_wishlist_v1',
-  ORDERS: 'atelier_orders_v1',
-  PRODUCTS_OVERRIDE: 'atelier_products_custom_v1',
+  ORDERS_CACHE: 'atelier_orders_cache_v1',
+  PRODUCTS_CACHE: 'atelier_products_cache_v1',
   PROMO: 'atelier_active_promo_v1'
 };
 
 const Store = {
-  // --- Products & Catalog ---
+  // --- Products & Catalog (SQLite3 REST API) ---
   getProducts(filters = {}) {
-    let customProducts = [];
+    // Return cached/seeded products synchronously for fast initial render
+    let list = [];
     try {
-      customProducts = JSON.parse(localStorage.getItem(STORAGE_KEYS.PRODUCTS_OVERRIDE)) || [];
-    } catch (e) {
-      customProducts = [];
-    }
-    let list = [...APPAREL_PRODUCTS, ...customProducts];
+      const cached = JSON.parse(localStorage.getItem(STORAGE_KEYS.PRODUCTS_CACHE));
+      if (cached && cached.length > 0) {
+        list = cached;
+      }
+    } catch (e) {}
 
-    // Filter by category
+    if (list.length === 0) {
+      list = [...APPAREL_PRODUCTS];
+    }
+
+    // Apply Client-Side Filters
     if (filters.category && filters.category !== 'all') {
       list = list.filter(p => p.category.toLowerCase() === filters.category.toLowerCase());
     }
-
-    // Filter by department
     if (filters.department && filters.department !== 'all') {
       list = list.filter(p => p.department.toLowerCase() === filters.department.toLowerCase() || p.department === 'Unisex');
     }
-
-    // Filter by size
     if (filters.size) {
-      list = list.filter(p => p.sizes.some(s => s.size === filters.size && s.stock > 0));
+      list = list.filter(p => (p.sizes || []).some(s => s.size === filters.size && s.stock > 0));
     }
-
-    // Filter by search query
     if (filters.search) {
       const q = filters.search.toLowerCase().trim();
       list = list.filter(p => 
         p.title.toLowerCase().includes(q) || 
-        p.description.toLowerCase().includes(q) ||
-        p.categoryName.toLowerCase().includes(q)
+        (p.description || '').toLowerCase().includes(q) ||
+        (p.categoryName || '').toLowerCase().includes(q)
       );
     }
-
-    // Filter by max price
     if (filters.maxPrice) {
       list = list.filter(p => p.price <= parseFloat(filters.maxPrice));
     }
-
-    // Filter by in-stock only
     if (filters.inStockOnly) {
-      list = list.filter(p => p.sizes.some(s => s.stock > 0));
+      list = list.filter(p => (p.sizes || []).some(s => s.stock > 0));
     }
 
     // Sorting
@@ -72,12 +66,27 @@ const Store = {
           break;
         case 'newest':
         default:
-          // Keep current default order
           break;
       }
     }
 
     return list;
+  },
+
+  // Asynchronous fetch directly from SQLite3 Backend
+  async fetchProductsFromAPI(filters = {}) {
+    try {
+      const params = new URLSearchParams(filters);
+      const res = await fetch(`/api/products?${params.toString()}`);
+      const json = await res.json();
+      if (json.success && json.data) {
+        localStorage.setItem(STORAGE_KEYS.PRODUCTS_CACHE, JSON.stringify(json.data));
+        return json.data;
+      }
+    } catch (e) {
+      console.warn('[Store] API fetch failed, falling back to local dataset:', e);
+    }
+    return this.getProducts(filters);
   },
 
   getProductBySlug(slug) {
@@ -92,6 +101,44 @@ const Store = {
 
   getCategories() {
     return APPAREL_CATEGORIES;
+  },
+
+  // Upload image to local /uploads/ directory via Multer API
+  async uploadLocalImage(file) {
+    const formData = new FormData();
+    formData.append('image', file);
+    try {
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData
+      });
+      const data = await res.json();
+      if (data.success) {
+        return data.url;
+      }
+    } catch (err) {
+      console.error('[Store] Local image upload failed:', err);
+    }
+    return null;
+  },
+
+  // Publish new product to SQLite3 API
+  async addProductToAPI(productData) {
+    try {
+      const res = await fetch('/api/products', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(productData)
+      });
+      const result = await res.json();
+      if (result.success) {
+        await this.fetchProductsFromAPI();
+        return result.data;
+      }
+    } catch (err) {
+      console.error('[Store] Failed to create product via API:', err);
+    }
+    return null;
   },
 
   // --- Cart Management ---
@@ -112,7 +159,7 @@ const Store = {
     const product = this.getProductById(productId);
     if (!product) return { success: false, message: 'Product not found' };
 
-    const variant = product.sizes.find(s => s.sku === sku || s.size === size);
+    const variant = (product.sizes || []).find(s => s.sku === sku || s.size === size);
     if (!variant || variant.stock < quantity) {
       return { success: false, message: 'Requested size or stock unavailable' };
     }
@@ -120,9 +167,8 @@ const Store = {
     const cart = this.getCart();
     const existingIndex = cart.findIndex(item => item.sku === sku);
 
-    // Find image matching colorway if available
-    const colorObj = product.colors.find(c => c.name === colorName);
-    const itemImage = colorObj ? colorObj.image : product.images.primary;
+    const colorObj = (product.colors || []).find(c => c.name === colorName);
+    const itemImage = colorObj ? colorObj.image : (product.images ? product.images.primary : '');
 
     if (existingIndex > -1) {
       const newQty = cart[existingIndex].quantity + quantity;
@@ -160,12 +206,7 @@ const Store = {
       return;
     }
 
-    if (newQty > item.maxStock) {
-      item.quantity = item.maxStock;
-    } else {
-      item.quantity = newQty;
-    }
-
+    item.quantity = Math.min(newQty, item.maxStock);
     this.saveCart(cart);
   },
 
@@ -186,7 +227,6 @@ const Store = {
     const cart = this.getCart();
     const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
     
-    // Free shipping threshold at $150
     const FREE_SHIPPING_THRESHOLD = 150.00;
     let shippingFee = subtotal >= FREE_SHIPPING_THRESHOLD || subtotal === 0 ? 0 : 15.00;
     let discountAmount = 0;
@@ -207,7 +247,6 @@ const Store = {
       }
     }
 
-    // Flat estimated tax (8%)
     const taxableSubtotal = Math.max(0, subtotal - discountAmount);
     const tax = taxableSubtotal * 0.08;
     const total = taxableSubtotal + shippingFee + tax;
@@ -274,112 +313,127 @@ const Store = {
     return this.getWishlist().includes(productId);
   },
 
-  // --- Orders & Checkout ---
-  createOrder(customerDetails, shippingMethod = 'standard') {
+  // --- Orders & SQLite3 Checkout Integration ---
+  async createOrder(customerDetails, shippingMethod = 'standard') {
     const cart = this.getCart();
     if (cart.length === 0) return { success: false, message: 'Cart is empty' };
 
     const totals = this.getCartTotals();
+    const payload = {
+      customer: customerDetails,
+      items: cart,
+      totals: totals,
+      shippingMethod: shippingMethod
+    };
+
+    try {
+      // Post to Express + SQLite3 backend
+      const res = await fetch('/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if (data.success && data.data) {
+        this.clearCart();
+        this.removePromo();
+        
+        // Cache order locally
+        let cached = this.getAllOrders();
+        cached.unshift(data.data);
+        localStorage.setItem(STORAGE_KEYS.ORDERS_CACHE, JSON.stringify(cached));
+        
+        // Refresh product inventory cache
+        this.fetchProductsFromAPI();
+
+        return { success: true, order: data.data };
+      }
+    } catch (err) {
+      console.warn('[Store] Remote order post failed, creating local offline order:', err);
+    }
+
+    // Fallback local order creation if offline
     const orderNumber = 'ATN-' + Math.floor(100000 + Math.random() * 900000);
-    
     const newOrder = {
       orderId: 'ord_' + Date.now(),
       orderNumber: orderNumber,
       createdAt: new Date().toISOString(),
-      status: 'Processing', // Processing, Shipped, Delivered, Cancelled
+      status: 'Processing',
       items: [...cart],
       customer: customerDetails,
       shippingMethod: shippingMethod,
       totals: totals,
       trackingNumber: 'TRK-' + Math.random().toString(36).substring(2, 10).toUpperCase(),
-      estimatedDelivery: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toLocaleDateString('en-US', {
-        month: 'short', day: 'numeric', year: 'numeric'
-      })
+      estimatedDelivery: new Date(Date.now() + 4 * 24 * 60 * 60 * 1000).toLocaleDateString()
     };
 
-    let orders = [];
-    try {
-      orders = JSON.parse(localStorage.getItem(STORAGE_KEYS.ORDERS)) || [];
-    } catch (e) {
-      orders = [];
-    }
-
+    let orders = this.getAllOrders();
     orders.unshift(newOrder);
-    localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify(orders));
-
-    // Clear cart after successful order
+    localStorage.setItem(STORAGE_KEYS.ORDERS_CACHE, JSON.stringify(orders));
     this.clearCart();
     this.removePromo();
-
     return { success: true, order: newOrder };
-  },
-
-  getOrder(orderNumber) {
-    try {
-      const orders = JSON.parse(localStorage.getItem(STORAGE_KEYS.ORDERS)) || [];
-      return orders.find(o => o.orderNumber === orderNumber || o.orderId === orderNumber) || null;
-    } catch (e) {
-      return null;
-    }
   },
 
   getAllOrders() {
     try {
-      const stored = JSON.parse(localStorage.getItem(STORAGE_KEYS.ORDERS)) || [];
-      // Provide some sample seeded orders if empty for admin preview
-      if (stored.length === 0) {
-        const sampleOrders = [
-          {
-            orderId: 'ord_sample_1',
-            orderNumber: 'ATN-847291',
-            createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-            status: 'Shipped',
-            customer: { firstName: 'Sarah', lastName: 'Vance', email: 'sarah.vance@example.com', city: 'New York' },
-            totals: { total: 385.00, itemsCount: 1 },
-            items: [{ title: 'Double-Breasted Cashmere-Wool Overcoat', size: 'M', colorName: 'Camel Tan', quantity: 1, price: 385.00 }]
-          },
-          {
-            orderId: 'ord_sample_2',
-            orderNumber: 'ATN-519344',
-            createdAt: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(),
-            status: 'Processing',
-            customer: { firstName: 'Julian', lastName: 'Mercer', email: 'julian@example.com', city: 'London' },
-            totals: { total: 290.00, itemsCount: 2 },
-            items: [{ title: 'Heavyweight Loopback Fleece Hoodie (500 GSM)', size: 'L', colorName: 'Oatmeal Heather', quantity: 2, price: 145.00 }]
-          }
-        ];
-        localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify(sampleOrders));
-        return sampleOrders;
-      }
-      return stored;
+      return JSON.parse(localStorage.getItem(STORAGE_KEYS.ORDERS_CACHE)) || [];
     } catch (e) {
       return [];
     }
   },
 
-  updateOrderStatus(orderNumber, newStatus) {
+  async fetchOrdersFromAPI() {
+    try {
+      const res = await fetch('/api/orders');
+      const data = await res.json();
+      if (data.success && data.data) {
+        localStorage.setItem(STORAGE_KEYS.ORDERS_CACHE, JSON.stringify(data.data));
+        return data.data;
+      }
+    } catch (err) {
+      console.warn('[Store] Orders API fetch failed:', err);
+    }
+    return this.getAllOrders();
+  },
+
+  getOrder(orderNumber) {
+    const orders = this.getAllOrders();
+    return orders.find(o => o.orderNumber === orderNumber || o.orderId === orderNumber) || null;
+  },
+
+  async updateOrderStatus(orderNumber, newStatus) {
+    try {
+      const res = await fetch(`/api/orders/${orderNumber}/status`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus })
+      });
+      const data = await res.json();
+      if (data.success) {
+        await this.fetchOrdersFromAPI();
+        return true;
+      }
+    } catch (err) {
+      console.warn('[Store] Status update API failed:', err);
+    }
+
     const orders = this.getAllOrders();
     const target = orders.find(o => o.orderNumber === orderNumber || o.orderId === orderNumber);
     if (target) {
       target.status = newStatus;
-      localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify(orders));
+      localStorage.setItem(STORAGE_KEYS.ORDERS_CACHE, JSON.stringify(orders));
       return true;
     }
     return false;
-  },
-
-  // --- Admin Catalog Updates ---
-  addCustomProduct(product) {
-    let custom = [];
-    try {
-      custom = JSON.parse(localStorage.getItem(STORAGE_KEYS.PRODUCTS_OVERRIDE)) || [];
-    } catch (e) {
-      custom = [];
-    }
-    custom.unshift(product);
-    localStorage.setItem(STORAGE_KEYS.PRODUCTS_OVERRIDE, JSON.stringify(custom));
-    return product;
   }
 };
 
-window.Store = Store;
+// Initial background sync with SQLite3 API on load
+if (typeof window !== 'undefined') {
+  window.Store = Store;
+  document.addEventListener('DOMContentLoaded', () => {
+    Store.fetchProductsFromAPI();
+    Store.fetchOrdersFromAPI();
+  });
+}

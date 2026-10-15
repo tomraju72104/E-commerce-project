@@ -396,18 +396,24 @@
       renderAdminDashboard();
     }
 
-    function previewLocalImage(input) {
+    async function previewLocalImage(input) {
       if (input.files && input.files[0]) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-          document.getElementById('imagePreview').src = e.target.result;
-          document.getElementById('newImageUrl').value = e.target.result;
-        };
-        reader.readAsDataURL(input.files[0]);
+        const file = input.files[0];
+        const localPreview = URL.createObjectURL(file);
+        document.getElementById('imagePreview').src = localPreview;
+        
+        // Upload immediately to local /uploads/ folder
+        showToast('Uploading photo to local storage...');
+        const uploadedUrl = await Store.uploadLocalImage(file);
+        if (uploadedUrl) {
+          document.getElementById('newImageUrl').value = uploadedUrl;
+          document.getElementById('imagePreview').src = uploadedUrl;
+          showToast('Image uploaded successfully to /uploads/');
+        }
       }
     }
 
-    function handleCreateProduct(e) {
+    async function handleCreateProduct(e) {
       e.preventDefault();
       const title = document.getElementById('newTitle').value.trim();
       const price = parseFloat(document.getElementById('newPrice').value);
@@ -418,12 +424,8 @@
       const badge = document.getElementById('newBadge').value;
       const imageUrl = document.getElementById('newImageUrl').value.trim();
 
-      const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
-
       const newProduct = {
-        id: 'prod_' + Date.now(),
         title: title,
-        slug: slug,
         category: category,
         categoryName: category.charAt(0).toUpperCase() + category.slice(1),
         department: department,
@@ -431,19 +433,8 @@
         compareAtPrice: comparePrice,
         badge: badge || null,
         badgeType: 'new',
-        rating: 5.0,
-        reviewCount: 1,
         description: description,
-        fabricDetails: 'Tailored luxury fabric specification.',
-        careGuide: 'Professional dry cleaning recommended.',
-        images: {
-          primary: imageUrl,
-          hover: imageUrl,
-          gallery: [imageUrl]
-        },
-        colors: [
-          { name: 'Standard Edition', hex: '#111215', image: imageUrl }
-        ],
+        imageUrl: imageUrl,
         sizes: [
           { size: 'XS', stock: parseInt(document.getElementById('stockXS').value) || 0, sku: `NEW-XS-${Date.now()}` },
           { size: 'S', stock: parseInt(document.getElementById('stockS').value) || 0, sku: `NEW-S-${Date.now()}` },
@@ -453,10 +444,10 @@
         ]
       };
 
-      Store.addCustomProduct(newProduct);
-      showToast(`Published "${title}" to the store catalog!`);
+      const created = await Store.addProductToAPI(newProduct);
+      showToast(`Published "${title}" to SQLite3 database!`);
       
-      // Reset & switch to products tab
+      // Reset & refresh
       e.target.reset();
       renderAdminDashboard();
       document.getElementById('tab-products').click();
