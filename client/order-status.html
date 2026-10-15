@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Order Status & Tracking | ATELIER NOIR</title>
+  
+  <!-- Bootstrap 5 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Bootstrap Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <!-- Custom Luxury Theme -->
+  <link href="css/style.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+
+  <!-- Header -->
+  <header class="bg-white border-bottom py-3">
+    <div class="container d-flex justify-content-between align-items-center">
+      <a class="navbar-brand" href="index.html">ATELIER<span>.</span>NOIR</a>
+      <a href="shop.html" class="btn btn-outline-dark btn-sm">Explore Collection</a>
+    </div>
+  </header>
+
+  <div class="container py-5">
+    
+    <!-- Lookup Box if not loaded via checkout -->
+    <div class="row justify-content-center mb-4 d-print-none" id="orderLookupCard" style="display: none;">
+      <div class="col-md-8 col-lg-6">
+        <div class="card p-4 border text-center shadow-sm">
+          <h5 class="font-heading fw-bold mb-2">Track Existing Acquisition</h5>
+          <p class="small text-muted mb-3">Enter your Atelier Order Reference (e.g. ATN-847291) to view live fulfillment progress.</p>
+          <form id="lookupForm" class="d-flex gap-2">
+            <input type="text" class="form-control text-uppercase" id="lookupInput" placeholder="ATN-XXXXXX" required>
+            <button type="submit" class="btn btn-atelier-dark">Track</button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Order Status Sheet -->
+    <div class="row justify-content-center" id="orderSheet">
+      <div class="col-lg-9">
+        <div class="card border rounded p-4 p-md-5 bg-white shadow-sm">
+          
+          <!-- Success banner -->
+          <div class="text-center mb-4 pb-3 border-bottom">
+            <div class="d-inline-flex align-items-center justify-content-center bg-success-subtle text-success rounded-circle mb-3" style="width: 64px; height: 64px;">
+              <i class="bi bi-check-lg fs-1"></i>
+            </div>
+            <h2 class="font-heading h3 mb-1">Acquisition Confirmed</h2>
+            <p class="text-muted small mb-2">
+              Thank you for your patronage. Your garments are currently entering our studio inspection queue.
+            </p>
+            <div class="badge bg-dark py-2 px-3 fs-6 letter-spacing">
+              Order Ref: <span id="displayOrderNum" class="text-warning">ATN-000000</span>
+            </div>
+          </div>
+
+          <!-- Interactive Fulfillment Steps -->
+          <div class="order-tracking-steps">
+            <div class="tracking-step completed">
+              <div class="tracking-step-icon"><i class="bi bi-bag-check"></i></div>
+              <div class="tracking-step-label">Placed</div>
+            </div>
+            <div class="tracking-step completed">
+              <div class="tracking-step-icon"><i class="bi bi-credit-card-2-back"></i></div>
+              <div class="tracking-step-label">Paid</div>
+            </div>
+            <div class="tracking-step active" id="stepProcessing">
+              <div class="tracking-step-icon"><i class="bi bi-scissors"></i></div>
+              <div class="tracking-step-label">Inspection</div>
+            </div>
+            <div class="tracking-step" id="stepShipped">
+              <div class="tracking-step-icon"><i class="bi bi-box-seam"></i></div>
+              <div class="tracking-step-label">Dispatched</div>
+            </div>
+            <div class="tracking-step" id="stepDelivered">
+              <div class="tracking-step-icon"><i class="bi bi-house-door"></i></div>
+              <div class="tracking-step-label">Delivered</div>
+            </div>
+          </div>
+
+          <!-- Tracking & Logistics Details -->
+          <div class="row g-4 bg-light p-4 rounded mb-4">
+            <div class="col-sm-6 col-md-3">
+              <span class="text-muted small text-uppercase fw-bold d-block">Estimated Arrival</span>
+              <strong id="displayEstDelivery" class="text-dark">Calculating...</strong>
+            </div>
+            <div class="col-sm-6 col-md-3">
+              <span class="text-muted small text-uppercase fw-bold d-block">Carrier Courier</span>
+              <strong>DHL Express Carbon-Neutral</strong>
+            </div>
+            <div class="col-sm-6 col-md-3">
+              <span class="text-muted small text-uppercase fw-bold d-block">Tracking Waybill</span>
+              <span id="displayTrackingNum" class="font-monospace text-primary">TRK-PENDING</span>
+            </div>
+            <div class="col-sm-6 col-md-3">
+              <span class="text-muted small text-uppercase fw-bold d-block">Fulfillment Status</span>
+              <span id="displayStatusBadge" class="badge bg-warning text-dark">Processing</span>
+            </div>
+          </div>
+
+          <!-- Items Ordered List -->
+          <h5 class="font-heading fw-bold mb-3">Garments In This Acquisition</h5>
+          <div class="table-responsive mb-4">
+            <table class="table align-middle">
+              <thead class="table-light small text-uppercase">
+                <tr>
+                  <th>Item</th>
+                  <th class="text-center">Size & Color</th>
+                  <th class="text-center">Quantity</th>
+                  <th class="text-end">Price</th>
+                </tr>
+              </thead>
+              <tbody id="orderItemsTable">
+                <!-- Injected via JS -->
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Address and Payment Breakdown -->
+          <div class="row g-4 pt-3 border-top">
+            <div class="col-md-6">
+              <h6 class="font-heading fw-bold small text-uppercase mb-2">Delivery Destination</h6>
+              <div class="small text-muted" id="displayCustomerAddress">
+                Client Name<br>
+                Street Address<br>
+                City, State Zip
+              </div>
+              <div class="small text-muted mt-2">
+                Notification Email: <strong id="displayCustomerEmail" class="text-dark">client@example.com</strong>
+              </div>
+            </div>
+
+            <div class="col-md-6">
+              <h6 class="font-heading fw-bold small text-uppercase mb-2">Financial Accounting</h6>
+              <div class="d-flex justify-content-between small mb-1">
+                <span class="text-muted">Subtotal</span>
+                <span id="finSubtotal">$0.00</span>
+              </div>
+              <div class="d-flex justify-content-between small mb-1 text-success" id="finDiscountRow" style="display: none;">
+                <span>Promotional Concession</span>
+                <span id="finDiscount">-$0.00</span>
+              </div>
+              <div class="d-flex justify-content-between small mb-1">
+                <span class="text-muted">Shipping</span>
+                <span id="finShipping">Free</span>
+              </div>
+              <div class="d-flex justify-content-between small mb-2 pb-2 border-bottom">
+                <span class="text-muted">Sales Tax</span>
+                <span id="finTax">$0.00</span>
+              </div>
+              <div class="d-flex justify-content-between fw-bold">
+                <span>Total Paid</span>
+                <span id="finTotal" class="fs-5 text-dark">$0.00</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Printable Actions -->
+          <div class="d-flex justify-content-between align-items-center mt-5 pt-3 border-top d-print-none">
+            <button class="btn btn-outline-secondary btn-sm" onclick="window.print()">
+              <i class="bi bi-printer me-1"></i> Print Official Receipt
+            </button>
+            <a href="shop.html" class="btn btn-atelier-dark btn-sm">
+              Acquire More Pieces <i class="bi bi-arrow-right ms-1"></i>
+            </a>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/store.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    function loadOrderStatus() {
+      const urlParams = new URLSearchParams(window.location.search);
+      let orderNum = urlParams.get('orderNumber');
+
+      let order = null;
+      if (orderNum) {
+        order = Store.getOrder(orderNum);
+      }
+
+      if (!order) {
+        // Fallback to latest order from storage or sample
+        const all = Store.getAllOrders();
+        if (all.length > 0) {
+          order = all[0];
+        }
+      }
+
+      const lookupCard = document.getElementById('orderLookupCard');
+
+      if (!order) {
+        if (lookupCard) lookupCard.style.display = 'block';
+        document.getElementById('orderSheet').style.display = 'none';
+        return;
+      }
+
+      if (lookupCard) lookupCard.style.display = 'block';
+
+      // Fill in details
+      document.getElementById('displayOrderNum').textContent = order.orderNumber;
+      document.getElementById('displayTrackingNum').textContent = order.trackingNumber || 'TRK-8429184';
+      document.getElementById('displayEstDelivery').textContent = order.estimatedDelivery || 'In 4 business days';
+      
+      const badge = document.getElementById('displayStatusBadge');
+      badge.textContent = order.status || 'Processing';
+      if (order.status === 'Shipped') {
+        badge.className = 'badge bg-primary';
+        document.getElementById('stepShipped').classList.add('completed');
+      } else if (order.status === 'Delivered') {
+        badge.className = 'badge bg-success';
+        document.getElementById('stepShipped').classList.add('completed');
+        document.getElementById('stepDelivered').classList.add('completed');
+      }
+
+      // Customer info
+      if (order.customer) {
+        document.getElementById('displayCustomerAddress').innerHTML = `
+          <strong>${order.customer.firstName || ''} ${order.customer.lastName || ''}</strong><br>
+          ${order.customer.address || 'Street address'}<br>
+          ${order.customer.city || ''}, ${order.customer.state || ''} ${order.customer.zip || ''}
+        `;
+        document.getElementById('displayCustomerEmail').textContent = order.customer.email || 'concierge.client@example.com';
+      }
+
+      // Items Table
+      const itemsBody = document.getElementById('orderItemsTable');
+      itemsBody.innerHTML = (order.items || []).map(item => `
+        <tr>
+          <td>
+            <div class="d-flex align-items-center gap-3">
+              ${item.image ? `<img src="${item.image}" alt="" style="width: 48px; height: 60px; object-fit: cover; border-radius: 4px;">` : ''}
+              <div>
+                <strong>${item.title}</strong>
+                <div class="small text-muted">SKU: ${item.sku || 'N/A'}</div>
+              </div>
+            </div>
+          </td>
+          <td class="text-center small">${item.size || 'M'} / ${item.colorName || 'Default'}</td>
+          <td class="text-center small fw-bold">${item.quantity}</td>
+          <td class="text-end small fw-bold">${formatMoney(item.price * item.quantity)}</td>
+        </tr>
+      `).join('');
+
+      // Financials
+      if (order.totals) {
+        document.getElementById('finSubtotal').textContent = formatMoney(order.totals.subtotal);
+        if (order.totals.discountAmount > 0) {
+          document.getElementById('finDiscountRow').style.display = 'flex';
+          document.getElementById('finDiscount').textContent = `-${formatMoney(order.totals.discountAmount)}`;
+        }
+        document.getElementById('finShipping').textContent = order.totals.shippingFee === 0 ? 'FREE' : formatMoney(order.totals.shippingFee);
+        document.getElementById('finTax').textContent = formatMoney(order.totals.tax);
+        document.getElementById('finTotal').textContent = formatMoney(order.totals.total);
+      }
+
+      // Lookup form handler
+      document.getElementById('lookupForm')?.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const ref = document.getElementById('lookupInput').value.trim();
+        if (ref) {
+          window.location.href = `order-status.html?orderNumber=${encodeURIComponent(ref)}`;
+        }
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', loadOrderStatus);
+  </script>
+</body>
+</html>

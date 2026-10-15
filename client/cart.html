@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Your Shopping Bag | ATELIER NOIR</title>
+  
+  <!-- Bootstrap 5 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Bootstrap Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <!-- Custom Luxury Theme -->
+  <link href="css/style.css" rel="stylesheet">
+</head>
+<body>
+
+  <!-- Top Announcement Bar -->
+  <div class="announcement-bar text-center">
+    <span>Free Express Shipping on Orders Over $150 &bull; Use Code <strong>ATELIER15</strong></span>
+  </div>
+
+  <!-- Main Navigation Bar -->
+  <nav class="navbar navbar-expand-lg main-navbar sticky-top">
+    <div class="container">
+      <a class="navbar-brand" href="index.html">ATELIER<span>.</span>NOIR</a>
+      <div class="collapse navbar-collapse" id="navbarContent">
+        <ul class="navbar-nav mx-auto mb-2 mb-lg-0">
+          <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
+          <li class="nav-item"><a class="nav-link" href="shop.html">Shop All</a></li>
+          <li class="nav-item"><a class="nav-link" href="shop.html?category=outerwear">Outerwear</a></li>
+          <li class="nav-item"><a class="nav-link" href="shop.html?category=knitwear">Knitwear</a></li>
+          <li class="nav-item"><a class="nav-link text-warning" href="admin.html"><i class="bi bi-speedometer2"></i> Admin</a></li>
+        </ul>
+        <div class="d-flex align-items-center gap-2">
+          <a href="shop.html?wishlist=true" class="nav-icon-btn" title="Saved Items"><i class="bi bi-heart"></i><span class="nav-badge wishlist-count-badge" style="display: none;">0</span></a>
+          <button class="nav-icon-btn" data-bs-toggle="offcanvas" data-bs-target="#cartOffcanvas" title="Shopping Bag"><i class="bi bi-bag"></i><span class="nav-badge cart-count-badge" style="display: none;">0</span></button>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container py-5">
+    <div class="d-flex justify-content-between align-items-end mb-4 pb-2 border-bottom">
+      <div>
+        <span class="text-uppercase text-muted fw-bold small">Review Selection</span>
+        <h1 class="font-heading h2 mb-0">Your Shopping Bag</h1>
+      </div>
+      <a href="shop.html" class="small text-decoration-underline text-dark">Continue Shopping</a>
+    </div>
+
+    <!-- Empty State -->
+    <div id="cartPageEmpty" class="text-center py-5 d-none bg-white rounded border">
+      <i class="bi bi-bag-x text-muted" style="font-size: 3.5rem;"></i>
+      <h3 class="font-heading mt-3">Your shopping bag is empty</h3>
+      <p class="text-muted small mx-auto" style="max-width: 420px;">
+        Explore our curated collection of outerwear, luxury knitwear, and tailoring to begin building your personal capsule.
+      </p>
+      <a href="shop.html" class="btn btn-atelier-dark mt-2">Explore The Catalog</a>
+    </div>
+
+    <!-- Full Cart Layout -->
+    <div class="row g-4" id="cartPageContent">
+      
+      <!-- Items Column -->
+      <div class="col-lg-8">
+        <div class="bg-white border rounded p-4 mb-4">
+          
+          <!-- Shipping progress -->
+          <div class="p-3 bg-light rounded mb-4">
+            <div class="d-flex justify-content-between small text-muted mb-1">
+              <span id="pageShippingMsg">Complimentary shipping on orders over $150</span>
+            </div>
+            <div class="free-shipping-progress">
+              <div class="free-shipping-bar" id="pageShippingBar" style="width: 0%;"></div>
+            </div>
+          </div>
+
+          <!-- Items Table -->
+          <div class="table-responsive">
+            <table class="table align-middle">
+              <thead class="table-light small text-uppercase">
+                <tr>
+                  <th scope="col" style="width: 45%;">Garment</th>
+                  <th scope="col" class="text-center">Quantity</th>
+                  <th scope="col" class="text-end">Total</th>
+                  <th scope="col"></th>
+                </tr>
+              </thead>
+              <tbody id="cartTableBody">
+                <!-- Injected via JS -->
+              </tbody>
+            </table>
+          </div>
+
+        </div>
+
+        <!-- Promo Code Accordion/Card -->
+        <div class="card border p-4 mb-4">
+          <h6 class="font-heading fw-bold mb-3">Promotional Voucher or Gift Code</h6>
+          <form id="cartPromoForm" class="row g-2 align-items-center">
+            <div class="col-8 col-sm-6">
+              <input type="text" class="form-control text-uppercase" id="promoCodeInput" placeholder="Try ATELIER15 or FIRSTDROP">
+            </div>
+            <div class="col-4 col-sm-3">
+              <button type="submit" class="btn btn-outline-dark w-100">Apply Code</button>
+            </div>
+          </form>
+          <div id="appliedPromoBadge" class="mt-3" style="display: none;"></div>
+        </div>
+
+      </div>
+
+      <!-- Order Summary Card -->
+      <div class="col-lg-4">
+        <div class="card border p-4 sticky-top" style="top: 100px;">
+          <h5 class="font-heading fw-bold mb-3 pb-2 border-bottom">Order Summary</h5>
+          
+          <div class="d-flex justify-content-between mb-2">
+            <span class="text-muted">Subtotal</span>
+            <span class="fw-bold" id="summarySubtotal">$0.00</span>
+          </div>
+
+          <div class="d-flex justify-content-between mb-2" id="summaryDiscountRow" style="display: none;">
+            <span class="text-success">Promotional Discount</span>
+            <span class="text-success fw-bold" id="summaryDiscount">-$0.00</span>
+          </div>
+
+          <div class="d-flex justify-content-between mb-2">
+            <span class="text-muted">Carbon-Neutral Shipping</span>
+            <span class="fw-bold" id="summaryShipping">Free</span>
+          </div>
+
+          <div class="d-flex justify-content-between mb-3 pb-3 border-bottom">
+            <span class="text-muted">Estimated Sales Tax (8%)</span>
+            <span class="fw-bold" id="summaryTax">$0.00</span>
+          </div>
+
+          <div class="d-flex justify-content-between align-items-baseline mb-4">
+            <span class="h5 font-heading mb-0">Total</span>
+            <span class="h4 font-heading mb-0 text-dark fw-bold" id="summaryTotal">$0.00</span>
+          </div>
+
+          <a href="checkout.html" class="btn btn-atelier-dark w-100 py-3 mb-3">
+            Proceed To Checkout <i class="bi bi-arrow-right ms-2"></i>
+          </a>
+
+          <div class="d-flex justify-content-center gap-4 text-muted small text-center pt-2">
+            <div><i class="bi bi-lock-fill d-block fs-5 mb-1 text-secondary"></i> 256-Bit SSL</div>
+            <div><i class="bi bi-box-seam d-block fs-5 mb-1 text-secondary"></i> Carbon Free</div>
+            <div><i class="bi bi-arrow-counterclockwise d-block fs-5 mb-1 text-secondary"></i> 30-Day Return</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Offcanvas Mini-Cart Drawer -->
+  <div class="offcanvas offcanvas-end cart-offcanvas" tabindex="-1" id="cartOffcanvas">
+    <div class="offcanvas-header border-bottom py-3">
+      <h5 class="offcanvas-title font-heading fw-bold mb-0">Shopping Bag</h5>
+      <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
+    </div>
+    <div class="offcanvas-body p-3" id="cartDrawerItems"></div>
+    <div class="p-3 bg-white border-top">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <span class="text-muted">Subtotal</span>
+        <h5 class="mb-0 fw-bold font-heading" id="cartDrawerSubtotal">$0.00</h5>
+      </div>
+      <a href="checkout.html" class="btn btn-atelier-dark w-100 py-2">Proceed To Checkout</a>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="main-footer">
+    <div class="container text-center small text-muted">
+      <p class="mb-0">&copy; 2026 ATELIER NOIR Co. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/store.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    function renderCartPage() {
+      const cart = Store.getCart();
+      const totals = Store.getCartTotals();
+      const emptyDiv = document.getElementById('cartPageEmpty');
+      const contentDiv = document.getElementById('cartPageContent');
+      const tableBody = document.getElementById('cartTableBody');
+
+      if (cart.length === 0) {
+        if (emptyDiv) emptyDiv.classList.remove('d-none');
+        if (contentDiv) contentDiv.classList.add('d-none');
+        return;
+      }
+
+      if (emptyDiv) emptyDiv.classList.add('d-none');
+      if (contentDiv) contentDiv.classList.remove('d-none');
+
+      // Shipping progress
+      const bar = document.getElementById('pageShippingBar');
+      const msg = document.getElementById('pageShippingMsg');
+      if (bar && msg) {
+        bar.style.width = `${totals.progressToFreeShipping}%`;
+        if (totals.amountNeededForFreeShipping === 0) {
+          msg.innerHTML = '<span class="text-success fw-bold"><i class="bi bi-check-circle-fill"></i> You unlocked complimentary standard shipping!</span>';
+        } else {
+          msg.innerHTML = `Add <strong>${formatMoney(totals.amountNeededForFreeShipping)}</strong> more to enjoy Free Shipping`;
+        }
+      }
+
+      // Render table rows
+      tableBody.innerHTML = cart.map(item => `
+        <tr>
+          <td>
+            <div class="d-flex align-items-center gap-3">
+              <img src="${item.image}" alt="${item.title}" class="cart-item-thumb" style="width: 70px; height: 90px;">
+              <div>
+                <a href="product.html?slug=${item.slug}" class="fw-bold text-dark d-block mb-1">${item.title}</a>
+                <span class="small text-muted d-block">Size: <strong>${item.size}</strong> &bull; Color: <strong>${item.colorName}</strong></span>
+                <span class="small text-muted">${formatMoney(item.price)} each</span>
+              </div>
+            </div>
+          </td>
+          <td class="text-center">
+            <div class="cart-qty-control">
+              <button class="cart-qty-btn" onclick="Store.updateCartQty('${item.sku}', ${item.quantity - 1}); renderCartPage();">-</button>
+              <span class="cart-qty-value">${item.quantity}</span>
+              <button class="cart-qty-btn" onclick="Store.updateCartQty('${item.sku}', ${item.quantity + 1}); renderCartPage();">+</button>
+            </div>
+          </td>
+          <td class="text-end fw-bold">
+            ${formatMoney(item.price * item.quantity)}
+          </td>
+          <td class="text-end">
+            <button class="btn btn-link text-muted p-0" onclick="Store.removeFromCart('${item.sku}'); renderCartPage();" title="Remove item">
+              <i class="bi bi-trash3"></i>
+            </button>
+          </td>
+        </tr>
+      `).join('');
+
+      // Summary totals
+      document.getElementById('summarySubtotal').textContent = formatMoney(totals.subtotal);
+      
+      const discountRow = document.getElementById('summaryDiscountRow');
+      const discountVal = document.getElementById('summaryDiscount');
+      if (totals.discountAmount > 0) {
+        discountRow.style.display = 'flex';
+        discountVal.textContent = `-${formatMoney(totals.discountAmount)}`;
+      } else {
+        discountRow.style.display = 'none';
+      }
+
+      document.getElementById('summaryShipping').textContent = totals.shippingFee === 0 ? 'FREE' : formatMoney(totals.shippingFee);
+      document.getElementById('summaryTax').textContent = formatMoney(totals.tax);
+      document.getElementById('summaryTotal').textContent = formatMoney(totals.total);
+
+      // Render promo badge
+      const promoBadge = document.getElementById('appliedPromoBadge');
+      if (totals.appliedPromo) {
+        promoBadge.style.display = 'block';
+        promoBadge.innerHTML = `
+          <div class="alert alert-success d-flex justify-content-between align-items-center py-2 px-3 mb-0 small">
+            <div>
+              <i class="bi bi-tag-fill me-1"></i> Promo <strong>${totals.appliedPromo.code}</strong> Applied: ${totals.appliedPromo.label}
+            </div>
+            <button type="button" class="btn btn-sm btn-link text-danger p-0" onclick="Store.removePromo(); renderCartPage();">Remove</button>
+          </div>
+        `;
+      } else {
+        promoBadge.style.display = 'none';
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      renderCartPage();
+
+      const promoForm = document.getElementById('cartPromoForm');
+      if (promoForm) {
+        promoForm.addEventListener('submit', (e) => {
+          e.preventDefault();
+          const code = document.getElementById('promoCodeInput').value;
+          const res = Store.applyPromo(code);
+          if (res.success) {
+            showToast(res.message);
+            renderCartPage();
+          } else {
+            showToast(res.message, 'warning');
+          }
+        });
+      }
+    });
+  </script>
+</body>
+</html>

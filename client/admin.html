@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Merchandising & Operations Portal | ATELIER NOIR</title>
+  
+  <!-- Bootstrap 5 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Bootstrap Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <!-- Custom Luxury Theme -->
+  <link href="css/style.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+
+  <!-- Admin Top Navbar -->
+  <nav class="navbar navbar-dark bg-dark sticky-top py-2 shadow-sm">
+    <div class="container-fluid px-4">
+      <div class="d-flex align-items-center gap-3">
+        <a class="navbar-brand font-heading fw-bold mb-0 text-white" href="admin.html">
+          ATELIER<span class="text-warning">.</span>OPS
+        </a>
+        <span class="badge bg-secondary">Decoupled Admin Dashboard</span>
+      </div>
+      <div class="d-flex align-items-center gap-3">
+        <a href="index.html" class="btn btn-outline-light btn-sm" target="_blank">
+          <i class="bi bi-box-arrow-up-right me-1"></i> View Live Storefront
+        </a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container-fluid px-4 py-4">
+    
+    <!-- Top KPI Cards -->
+    <div class="row g-3 mb-4">
+      <div class="col-sm-6 col-xl-3">
+        <div class="card border-0 shadow-sm p-3 bg-white">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <span class="text-muted small text-uppercase fw-bold">Gross Volume</span>
+              <h3 class="font-heading fw-bold my-1" id="kpiRevenue">$0.00</h3>
+              <span class="text-success small fw-bold"><i class="bi bi-arrow-up"></i> +18.4% vs last drop</span>
+            </div>
+            <div class="bg-primary-subtle text-primary p-3 rounded-circle">
+              <i class="bi bi-currency-dollar fs-4"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-sm-6 col-xl-3">
+        <div class="card border-0 shadow-sm p-3 bg-white">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <span class="text-muted small text-uppercase fw-bold">Active Orders</span>
+              <h3 class="font-heading fw-bold my-1" id="kpiOrders">0</h3>
+              <span class="text-muted small">Pending Fulfillment</span>
+            </div>
+            <div class="bg-warning-subtle text-warning p-3 rounded-circle">
+              <i class="bi bi-bag-check fs-4"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-sm-6 col-xl-3">
+        <div class="card border-0 shadow-sm p-3 bg-white">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <span class="text-muted small text-uppercase fw-bold">Active Catalog SKUs</span>
+              <h3 class="font-heading fw-bold my-1" id="kpiSkus">24</h3>
+              <span class="text-muted small">Across 6 Categories</span>
+            </div>
+            <div class="bg-info-subtle text-info p-3 rounded-circle">
+              <i class="bi bi-grid-3x3-gap fs-4"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-sm-6 col-xl-3">
+        <div class="card border-0 shadow-sm p-3 bg-white">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <span class="text-muted small text-uppercase fw-bold">Low Stock Warning</span>
+              <h3 class="font-heading fw-bold my-1 text-danger" id="kpiLowStock">0</h3>
+              <span class="text-danger small fw-bold">Threshold &le; 3 units</span>
+            </div>
+            <div class="bg-danger-subtle text-danger p-3 rounded-circle">
+              <i class="bi bi-exclamation-triangle fs-4"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Navigation Tabs -->
+    <ul class="nav nav-pills mb-4 bg-white p-2 rounded shadow-sm border" id="adminTab" role="tablist">
+      <li class="nav-item">
+        <button class="nav-link active fw-bold small text-uppercase" id="tab-orders" data-bs-toggle="pill" data-bs-target="#panel-orders">
+          <i class="bi bi-truck me-2"></i> Orders & Fulfillment
+        </button>
+      </li>
+      <li class="nav-item">
+        <button class="nav-link fw-bold small text-uppercase" id="tab-products" data-bs-toggle="pill" data-bs-target="#panel-products">
+          <i class="bi bi-tags me-2"></i> Product Catalog
+        </button>
+      </li>
+      <li class="nav-item">
+        <button class="nav-link fw-bold small text-uppercase" id="tab-new" data-bs-toggle="pill" data-bs-target="#panel-new">
+          <i class="bi bi-plus-circle me-2"></i> Add New Garment
+        </button>
+      </li>
+    </ul>
+
+    <!-- Tab Panels -->
+    <div class="tab-content" id="adminTabContent">
+      
+      <!-- Panel 1: Orders Fulfillment -->
+      <div class="tab-pane fade show active" id="panel-orders">
+        <div class="card border-0 shadow-sm p-4 bg-white">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="font-heading fw-bold mb-0">Customer Orders Queue</h5>
+            <span class="small text-muted">Updates persist in real-time</span>
+          </div>
+
+          <div class="table-responsive">
+            <table class="table table-hover align-middle">
+              <thead class="table-light small text-uppercase">
+                <tr>
+                  <th>Order Reference</th>
+                  <th>Customer</th>
+                  <th>Items</th>
+                  <th>Total Amount</th>
+                  <th>Date</th>
+                  <th>Fulfillment Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="adminOrdersTableBody">
+                <!-- Injected via JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Panel 2: Product Catalog & Stock Matrix -->
+      <div class="tab-pane fade" id="panel-products">
+        <div class="card border-0 shadow-sm p-4 bg-white">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="font-heading fw-bold mb-0">Catalog Inventory Matrix</h5>
+            <button class="btn btn-atelier-dark btn-sm" onclick="document.getElementById('tab-new').click()">
+              <i class="bi bi-plus-lg me-1"></i> Add Garment
+            </button>
+          </div>
+
+          <div class="table-responsive">
+            <table class="table table-hover align-middle">
+              <thead class="table-light small text-uppercase">
+                <tr>
+                  <th>Garment</th>
+                  <th>Category</th>
+                  <th>Price</th>
+                  <th>Variants & Stock Levels</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="adminProductsTableBody">
+                <!-- Injected via JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Panel 3: Add New Garment (Demonstrates Decoupled Architecture / File Upload Ready) -->
+      <div class="tab-pane fade" id="panel-new">
+        <div class="card border-0 shadow-sm p-4 bg-white">
+          <h5 class="font-heading fw-bold mb-2">Publish New Garment To Catalog</h5>
+          <p class="text-muted small mb-4">
+            Create a multi-variant apparel piece with sizes, colorways, and pricing. (In Phase 2, this will save to SQLite3 and upload to the local <code>/uploads</code> folder).
+          </p>
+
+          <form id="newProductForm" onsubmit="handleCreateProduct(event)">
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label small fw-bold text-uppercase">Garment Title</label>
+                <input type="text" class="form-control" id="newTitle" placeholder="e.g. Boiled Wool Chore Jacket" required>
+              </div>
+
+              <div class="col-md-3">
+                <label class="form-label small fw-bold text-uppercase">Category</label>
+                <select class="form-select" id="newCategory" required>
+                  <option value="outerwear">Outerwear & Coats</option>
+                  <option value="knitwear">Knitwear & Sweaters</option>
+                  <option value="tailoring">Tailoring & Blazers</option>
+                  <option value="trousers">Trousers & Denim</option>
+                  <option value="shirts">Shirts & Tops</option>
+                  <option value="accessories">Accessories</option>
+                </select>
+              </div>
+
+              <div class="col-md-3">
+                <label class="form-label small fw-bold text-uppercase">Department</label>
+                <select class="form-select" id="newDepartment" required>
+                  <option value="Unisex">Unisex</option>
+                  <option value="Men">Men</option>
+                  <option value="Women">Women</option>
+                </select>
+              </div>
+
+              <div class="col-md-4">
+                <label class="form-label small fw-bold text-uppercase">Retail Price ($)</label>
+                <input type="number" step="0.01" class="form-control" id="newPrice" placeholder="220.00" required>
+              </div>
+
+              <div class="col-md-4">
+                <label class="form-label small fw-bold text-uppercase">Compare At Price ($)</label>
+                <input type="number" step="0.01" class="form-control" id="newComparePrice" placeholder="Optional original MSRP">
+              </div>
+
+              <div class="col-md-4">
+                <label class="form-label small fw-bold text-uppercase">Promotional Badge</label>
+                <select class="form-select" id="newBadge">
+                  <option value="">None</option>
+                  <option value="NEW DROP">NEW DROP</option>
+                  <option value="ORGANIC">ORGANIC</option>
+                  <option value="LOW STOCK">LOW STOCK</option>
+                  <option value="BESTSELLER">BESTSELLER</option>
+                </select>
+              </div>
+
+              <div class="col-12">
+                <label class="form-label small fw-bold text-uppercase">Description</label>
+                <textarea class="form-control" id="newDescription" rows="3" placeholder="Fabric drape, tactile weight, button details..." required></textarea>
+              </div>
+
+              <!-- Media Upload Section -->
+              <div class="col-md-6">
+                <label class="form-label small fw-bold text-uppercase">Primary Image URL (or Local File Preview)</label>
+                <input type="url" class="form-control mb-2" id="newImageUrl" placeholder="https://images.unsplash.com/..." value="https://images.unsplash.com/photo-1544022613-e87ca75a784a?q=80&w=1000">
+                <div class="small text-muted mb-2">Or select a local photo for preview:</div>
+                <input type="file" class="form-control form-control-sm" id="newLocalFile" accept="image/*" onchange="previewLocalImage(this)">
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label small fw-bold text-uppercase">Image Preview</label>
+                <div class="border rounded p-2 text-center bg-light" style="height: 140px;">
+                  <img id="imagePreview" src="https://images.unsplash.com/photo-1544022613-e87ca75a784a?q=80&w=1000" alt="Preview" style="max-height: 100%; object-fit: contain;">
+                </div>
+              </div>
+
+              <!-- Initial Sizes Stock -->
+              <div class="col-12 pt-3 border-top">
+                <label class="form-label small fw-bold text-uppercase mb-2">Initial Size Inventory Quantities</label>
+                <div class="row g-2">
+                  <div class="col-4 col-sm-2">
+                    <label class="form-label small">XS Stock</label>
+                    <input type="number" class="form-control form-control-sm" id="stockXS" value="3">
+                  </div>
+                  <div class="col-4 col-sm-2">
+                    <label class="form-label small">S Stock</label>
+                    <input type="number" class="form-control form-control-sm" id="stockS" value="6">
+                  </div>
+                  <div class="col-4 col-sm-2">
+                    <label class="form-label small">M Stock</label>
+                    <input type="number" class="form-control form-control-sm" id="stockM" value="10">
+                  </div>
+                  <div class="col-4 col-sm-2">
+                    <label class="form-label small">L Stock</label>
+                    <input type="number" class="form-control form-control-sm" id="stockL" value="8">
+                  </div>
+                  <div class="col-4 col-sm-2">
+                    <label class="form-label small">XL Stock</label>
+                    <input type="number" class="form-control form-control-sm" id="stockXL" value="4">
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-12 mt-4">
+                <button type="submit" class="btn btn-atelier-dark py-2 px-4">
+                  <i class="bi bi-cloud-arrow-up me-2"></i> Save & Publish Garment
+                </button>
+              </div>
+
+            </div>
+          </form>
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/store.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    function renderAdminDashboard() {
+      const orders = Store.getAllOrders();
+      const products = Store.getProducts({});
+
+      // Calculations
+      const grossRevenue = orders.reduce((sum, o) => sum + (o.totals?.total || 0), 0);
+      const lowStockCount = products.reduce((count, p) => {
+        const hasLow = (p.sizes || []).some(s => s.stock > 0 && s.stock <= 3);
+        return hasLow ? count + 1 : count;
+      }, 0);
+
+      document.getElementById('kpiRevenue').textContent = formatMoney(grossRevenue);
+      document.getElementById('kpiOrders').textContent = orders.length;
+      document.getElementById('kpiLowStock').textContent = lowStockCount;
+
+      // Render Orders Table
+      const ordersBody = document.getElementById('adminOrdersTableBody');
+      ordersBody.innerHTML = orders.map(o => `
+        <tr>
+          <td>
+            <a href="order-status.html?orderNumber=${o.orderNumber}" target="_blank" class="fw-bold text-dark font-monospace">
+              ${o.orderNumber}
+            </a>
+          </td>
+          <td>
+            <strong>${o.customer?.firstName || 'Guest'} ${o.customer?.lastName || ''}</strong><br>
+            <span class="small text-muted">${o.customer?.city || 'New York'}, ${o.customer?.state || 'NY'}</span>
+          </td>
+          <td>
+            <span class="badge bg-light text-dark border">${(o.items || []).length} Item(s)</span>
+          </td>
+          <td class="fw-bold">
+            ${formatMoney(o.totals?.total || 0)}
+          </td>
+          <td class="small text-muted">
+            ${new Date(o.createdAt).toLocaleDateString()}
+          </td>
+          <td>
+            <select class="form-select form-select-sm" style="width: 140px;" onchange="handleStatusChange('${o.orderNumber}', this.value)">
+              <option value="Processing" ${o.status === 'Processing' ? 'selected' : ''}>Processing</option>
+              <option value="Shipped" ${o.status === 'Shipped' ? 'selected' : ''}>Shipped</option>
+              <option value="Delivered" ${o.status === 'Delivered' ? 'selected' : ''}>Delivered</option>
+              <option value="Cancelled" ${o.status === 'Cancelled' ? 'selected' : ''}>Cancelled</option>
+            </select>
+          </td>
+          <td>
+            <a href="order-status.html?orderNumber=${o.orderNumber}" target="_blank" class="btn btn-outline-dark btn-sm py-0">
+              <i class="bi bi-eye"></i> View
+            </a>
+          </td>
+        </tr>
+      `).join('');
+
+      // Render Products Table
+      const productsBody = document.getElementById('adminProductsTableBody');
+      productsBody.innerHTML = products.map(p => {
+        const sizeBadges = (p.sizes || []).map(s => {
+          const bg = s.stock === 0 ? 'bg-danger' : (s.stock <= 3 ? 'bg-warning text-dark' : 'bg-light text-dark border');
+          return `<span class="badge ${bg} me-1 mb-1">${s.size}: ${s.stock}</span>`;
+        }).join('');
+
+        return `
+          <tr>
+            <td>
+              <div class="d-flex align-items-center gap-2">
+                <img src="${p.images?.primary || ''}" alt="" style="width: 44px; height: 56px; object-fit: cover; border-radius: 4px;">
+                <div>
+                  <a href="product.html?slug=${p.slug}" target="_blank" class="fw-bold text-dark d-block">
+                    ${p.title}
+                  </a>
+                  <span class="small text-muted">ID: ${p.id}</span>
+                </div>
+              </div>
+            </td>
+            <td><span class="badge bg-secondary">${p.categoryName}</span></td>
+            <td class="fw-bold">${formatMoney(p.price)}</td>
+            <td>
+              <div class="d-flex flex-wrap">${sizeBadges}</div>
+            </td>
+            <td>
+              <a href="product.html?slug=${p.slug}" target="_blank" class="btn btn-outline-secondary btn-sm py-0">
+                <i class="bi bi-box-arrow-up-right"></i>
+              </a>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function handleStatusChange(orderNumber, newStatus) {
+      Store.updateOrderStatus(orderNumber, newStatus);
+      showToast(`Order ${orderNumber} status transitioned to "${newStatus}"`);
+      renderAdminDashboard();
+    }
+
+    function previewLocalImage(input) {
+      if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          document.getElementById('imagePreview').src = e.target.result;
+          document.getElementById('newImageUrl').value = e.target.result;
+        };
+        reader.readAsDataURL(input.files[0]);
+      }
+    }
+
+    function handleCreateProduct(e) {
+      e.preventDefault();
+      const title = document.getElementById('newTitle').value.trim();
+      const price = parseFloat(document.getElementById('newPrice').value);
+      const comparePrice = parseFloat(document.getElementById('newComparePrice').value) || null;
+      const category = document.getElementById('newCategory').value;
+      const department = document.getElementById('newDepartment').value;
+      const description = document.getElementById('newDescription').value.trim();
+      const badge = document.getElementById('newBadge').value;
+      const imageUrl = document.getElementById('newImageUrl').value.trim();
+
+      const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
+
+      const newProduct = {
+        id: 'prod_' + Date.now(),
+        title: title,
+        slug: slug,
+        category: category,
+        categoryName: category.charAt(0).toUpperCase() + category.slice(1),
+        department: department,
+        price: price,
+        compareAtPrice: comparePrice,
+        badge: badge || null,
+        badgeType: 'new',
+        rating: 5.0,
+        reviewCount: 1,
+        description: description,
+        fabricDetails: 'Tailored luxury fabric specification.',
+        careGuide: 'Professional dry cleaning recommended.',
+        images: {
+          primary: imageUrl,
+          hover: imageUrl,
+          gallery: [imageUrl]
+        },
+        colors: [
+          { name: 'Standard Edition', hex: '#111215', image: imageUrl }
+        ],
+        sizes: [
+          { size: 'XS', stock: parseInt(document.getElementById('stockXS').value) || 0, sku: `NEW-XS-${Date.now()}` },
+          { size: 'S', stock: parseInt(document.getElementById('stockS').value) || 0, sku: `NEW-S-${Date.now()}` },
+          { size: 'M', stock: parseInt(document.getElementById('stockM').value) || 0, sku: `NEW-M-${Date.now()}` },
+          { size: 'L', stock: parseInt(document.getElementById('stockL').value) || 0, sku: `NEW-L-${Date.now()}` },
+          { size: 'XL', stock: parseInt(document.getElementById('stockXL').value) || 0, sku: `NEW-XL-${Date.now()}` }
+        ]
+      };
+
+      Store.addCustomProduct(newProduct);
+      showToast(`Published "${title}" to the store catalog!`);
+      
+      // Reset & switch to products tab
+      e.target.reset();
+      renderAdminDashboard();
+      document.getElementById('tab-products').click();
+    }
+
+    document.addEventListener('DOMContentLoaded', renderAdminDashboard);
+  </script>
+</body>
+</html>
